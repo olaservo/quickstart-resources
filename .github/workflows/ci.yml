@@ -41,5 +41,15 @@ jobs:
         with:
           go-version: "1.25"
 
+      # 3.4 is the oldest series still supported: 3.2 reached end of life in
+      # March 2026, so the anthropic gem's own `>= 3.2.0` floor is a statement
+      # about what it tolerates, not a version to install here. Gems are
+      # installed by the smoke test rather than by `bundler-cache`, which wants
+      # a Gemfile at the checkout root; the two Ruby examples keep their own.
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+
       - name: Run smoke tests
         run: ./tests/smoke-test.sh

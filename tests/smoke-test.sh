@@ -100,12 +100,31 @@ test_mcp_client_typescript() {
     node "${client_dir}/build/index.js" "${MOCK_SERVER}" >/dev/null 2>&1
 }
 
+# Test: Ruby MCP client
+#
+# The client connects to the server before it looks for ANTHROPIC_API_KEY and
+# exits 0 when there is none, so the connection and tool listing are exercised
+# without credentials -- the same shape as the Python client above.
+test_mcp_client_ruby() {
+    check_dependency ruby || return 1
+    check_dependency bundle || return 1
+    local client_dir="${PROJECT_ROOT}/mcp-client-ruby"
+    ensure_bundled "${client_dir}" || return 1
+    (cd "${client_dir}" && bundle exec ruby client.rb "${MOCK_SERVER}") >/dev/null 2>&1
+}
+
 # Run all tests
 #
-# All four servers are covered. The Go and Rust clients are not: on main both
-# abort when no .env file is present, so they cannot be driven without
-# credentials. Making them start credential-free is a change in their own
-# directories, so their coverage lands with those changes rather than here.
+# The Go and Rust clients are not covered: on main both abort when no .env file
+# is present, so they cannot be driven without credentials. Making them start
+# credential-free is a change in their own directories, so their coverage lands
+# with those changes rather than here.
+#
+# The Ruby weather server is not covered either, for an upstream reason rather
+# than a local one: the mcp gem's server does not emit the `resultType` field
+# that protocol revision 2026-07-28 makes mandatory, so the test client rejects
+# its responses. The Ruby client is covered, because it is the gem's client
+# code that runs there and the server it is pointed at is the mock.
 print_header "Running smoke tests"
 run_test "weather-server-python" test_weather_server_python
 run_test "weather-server-typescript" test_weather_server_typescript
@@ -113,6 +132,7 @@ run_test "weather-server-rust" test_weather_server_rust
 run_test "weather-server-go" test_weather_server_go
 run_test "mcp-client-python" test_mcp_client_python
 run_test "mcp-client-typescript" test_mcp_client_typescript
+run_test "mcp-client-ruby" test_mcp_client_ruby
 
 # Print summary
 echo ""

@@ -138,3 +138,22 @@ ensure_built() {
         run_build "go build in ${dir}" go build -o "server$(exe_suffix)" . || return 1
     fi
 }
+
+# Ensure a Ruby project directory has its gems installed.
+#
+# Separate from ensure_built because there is nothing on disk to test for: a
+# Ruby example has no build step and Gemfile.lock is gitignored, so the checks
+# ensure_built makes -- does this artefact exist yet -- have no equivalent.
+# `bundle check` asks Bundler itself whether the Gemfile is already satisfied,
+# which is the only reliable form of the question.
+#
+# Returns rather than exits, as ensure_built does, so a failure to install
+# fails only the test that needed the gems.
+ensure_bundled() {
+    local dir=$1
+    cd "${dir}" || return 1
+
+    if ! bundle check >/dev/null 2>&1; then
+        run_build "bundle install in ${dir}" bundle install || return 1
+    fi
+}
